@@ -32,7 +32,7 @@ public class WorldBankServer {
 
     private final WorldBankServiceImpl worldBankService;
 
-    @GetMapping("/{countryCode}/{indicatorCode}/{year}")
+    @GetMapping("/info/{countryCode}/{indicatorCode}/{year}")
     public ResponseEntity<String> getCountryInfo(@PathVariable String countryCode,
                                                  @PathVariable String indicatorCode,
                                                  @PathVariable String year) {
