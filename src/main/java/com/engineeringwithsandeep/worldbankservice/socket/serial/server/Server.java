@@ -101,6 +101,7 @@ class ServerThread extends Thread {
                 Command processedCommand = processCommand(commandData, service);
 
                 String response = processedCommand.execute();
+                System.out.println("Response: " + response);
                 out.println(response);
                 out.flush();
 
