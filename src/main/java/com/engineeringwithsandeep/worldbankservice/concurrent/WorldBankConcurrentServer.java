@@ -1,14 +1,16 @@
-package com.engineeringwithsandeep.worldbankservice.serial;
+package com.engineeringwithsandeep.worldbankservice.concurrent;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
-
-import java.io.FileReader;
-import java.io.IOException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,38 +18,39 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.OptionalDouble;
+import java.util.concurrent.*;
 
-import static com.engineeringwithsandeep.worldbankservice.serial.WDIDao.database;
+import static com.engineeringwithsandeep.worldbankservice.concurrent.WDIConcurrentDao.database;
 
-/**
- * This is server level, controller call which makes HTTP call's
- * @author : EngineeringWithSandeep
- */
+
 @RestController
-@RequestMapping("/wdi")
+@RequestMapping("/wdi/async")
 @AllArgsConstructor
-public class WorldBankServer {
+public class WorldBankConcurrentServer {
 
-    private final WorldBankServiceImpl worldBankService;
+    private final WorldBankConcurrentServiceImpl worldBankService;
 
     @GetMapping("/info/{countryCode}/{indicatorCode}/{year}")
     public ResponseEntity<String> getCountryInfo(@PathVariable String countryCode,
                                                  @PathVariable String indicatorCode,
                                                  @PathVariable String year) {
+
+
         String response = worldBankService.getCountryInfo(countryCode, indicatorCode, Integer.parseInt(year));
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/report/{countryCode}/{indicatorCode}/")
     public ResponseEntity<String> getCountryReport(@PathVariable String countryCode,
-                                                 @PathVariable String indicatorCode) {
+                                                   @PathVariable String indicatorCode) {
         String response = worldBankService.getCountryReport(countryCode, indicatorCode);
         return ResponseEntity.ok(response);
     }
 }
-
 /**
  * This is Datas access object class which holds a single records information for WDI
  * @author : EngineeringWithSandeep
@@ -76,21 +79,22 @@ class CountryData {
 @Data
 @NoArgsConstructor
 @Component
-class WDIDao {
-    public static HashMap<String, CountryData> database = new HashMap<>(); // Store CSV data in memory
+class WDIConcurrentDao {
+    public static ConcurrentHashMap<String, CountryData> database = new ConcurrentHashMap<>(); // Store CSV data in memory
 
     // Load data from CSV only once
-    public HashMap<String, CountryData> load() {
+    @Async
+    public Future<ConcurrentHashMap<String, CountryData>> loadAsync() {
         if (database.isEmpty()) {
             System.out.println("Loading data from CSV...");
             CsvReader.readCsv("src/main/resources/WDICSV.csv");
         }
-        return database;
+        return new AsyncResult<>(database);
     }
 
     public static void save(CountryData countryData) {
         if (database == null) {
-            database = new HashMap<>();
+            database = new ConcurrentHashMap<>();
         }
         // inorder to main unique key's for each country code - a key with combination of countryCode and indicatorCode is used
         database.put(countryData.getCountryCode() + "_" + countryData.getIndicatorCode(), countryData);
@@ -101,7 +105,7 @@ class WDIDao {
  * general contract / interface for commands / request
  * @author : EngineeringWithSandeep
  */
-interface WorldBankService {
+interface WorldBankConcurrentService {
     String getCountryInfo(String countryCode, String indicatorCode, Integer year);
     String getCountryReport(String countryCode, String indicatorCode);
 }
@@ -112,32 +116,47 @@ interface WorldBankService {
  */
 @Service
 @AllArgsConstructor
-class WorldBankServiceImpl implements WorldBankService {
+class WorldBankConcurrentServiceImpl implements WorldBankConcurrentService {
 
-    private final WDIDao wdiDao;
+    private final WDIConcurrentDao wdiDao;
 
     @Override
     public String getCountryInfo(String countryCode, String indicatorCode, Integer year) {
-        CountryData countryData = getDataHashMap().get(countryCode + "_" + indicatorCode);
-        String countryName = countryData.getCountryName();
-        String indicatorName = countryData.getIndicatorName();
-        Double data = countryData.getYearData().get(year);
-        return String.format("country: %s has %s had %s in year %s", countryName, indicatorName, data, year);
+        try {
+            // Wait for the async load to finish if it's not already loaded
+            Future<ConcurrentHashMap<String, CountryData>> futureDatabase = getDatabase();
+            ConcurrentHashMap<String, CountryData> database = futureDatabase.get();  // Blocking call until it's done
+
+            CountryData countryData = database.get(countryCode + "_" + indicatorCode);
+            String countryName = countryData.getCountryName();
+            String indicatorName = countryData.getIndicatorName();
+            Double data = countryData.getYearData().get(year);
+            return String.format("Country: %s had %s of %s in year %s", countryName, indicatorName, data, year);
+        } catch (Exception e) {
+            return "Error fetching data: " + e.getMessage();
+        }
     }
 
     @Override
     public String getCountryReport(String countryCode, String indicatorCode) {
-        CountryData countryData = getDataHashMap().get(countryCode + "_" + indicatorCode);
-        String countryName = countryData.getCountryName();
-        String indicatorName = countryData.getIndicatorName();
-        OptionalDouble optionalDouble = calculateMean(countryName, indicatorCode);
-        return String.format("country: %s has %s with mean average of %s percentage over the year 1960-2024", countryName, indicatorName,
-                optionalDouble.isPresent() ? optionalDouble.getAsDouble() : 0);
+        try {
+            Future<ConcurrentHashMap<String, CountryData>> futureDatabase = getDatabase();
+            ConcurrentHashMap<String, CountryData> database = futureDatabase.get();
+
+            CountryData countryData = database.get(countryCode + "_" + indicatorCode);
+            String countryName = countryData.getCountryName();
+            String indicatorName = countryData.getIndicatorName();
+            OptionalDouble optionalDouble = calculateMean(countryName, indicatorCode);
+            return String.format("Country: %s has %s with an average of %s from 1960 to 2024",
+                    countryName, indicatorName, optionalDouble.isPresent() ? optionalDouble.getAsDouble() : 0);
+        } catch (Exception e) {
+            return "Error fetching report: " + e.getMessage();
+        }
     }
 
     // Helper method
-    private HashMap<String, CountryData> getDataHashMap() {
-        return wdiDao.load();
+    private Future<ConcurrentHashMap<String, CountryData>> getDatabase() {
+        return wdiDao.loadAsync();
     }
 
     // Method to calculate mean value of a given indicator for a specific country
@@ -186,10 +205,25 @@ class CsvReader {
                     countryData.getYearData().put(year, value);
                 }
                 // Here you can pass the `countryData` object to the DAO for storing
-                WDIDao.save(countryData);
+                WDIConcurrentDao.save(countryData);
             }
         } catch (IOException | CsvValidationException e) {
             System.out.println(e.getMessage());
         }
+    }
+}
+
+@Configuration
+class AsyncConfig {
+
+    @Bean(name = "taskExecutor")
+    public Executor taskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("Async-");
+        executor.initialize();
+        return executor;
     }
 }
