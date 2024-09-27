@@ -1,6 +1,6 @@
-package com.engineeringwithsandeep.worldbankservice.socket.serial.command;
+package com.engineeringwithsandeep.worldbankservice.socket.command;
 
-import com.engineeringwithsandeep.worldbankservice.socket.serial.service.WorldBankServiceImpl;
+import com.engineeringwithsandeep.worldbankservice.socket.service.WorldBankServiceImpl;
 
 public class ReportCommand extends Command {
 

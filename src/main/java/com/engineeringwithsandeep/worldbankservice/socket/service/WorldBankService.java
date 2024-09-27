@@ -1,4 +1,4 @@
-package com.engineeringwithsandeep.worldbankservice.socket.serial.service;
+package com.engineeringwithsandeep.worldbankservice.socket.service;
 
 /**
  * general contract / interface for commands / request

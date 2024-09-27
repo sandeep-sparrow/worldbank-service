@@ -1,4 +1,4 @@
-package com.engineeringwithsandeep.worldbankservice.socket.serial.dao;
+package com.engineeringwithsandeep.worldbankservice.socket.dao;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

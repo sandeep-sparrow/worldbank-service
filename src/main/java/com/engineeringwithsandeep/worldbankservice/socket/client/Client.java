@@ -1,4 +1,4 @@
-package com.engineeringwithsandeep.worldbankservice.socket.serial.client;
+package com.engineeringwithsandeep.worldbankservice.socket.client;
 
 // Client.java
 import java.io.*;

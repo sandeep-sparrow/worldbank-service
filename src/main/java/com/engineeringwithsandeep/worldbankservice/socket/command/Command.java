@@ -1,4 +1,4 @@
-package com.engineeringwithsandeep.worldbankservice.socket.serial.command;
+package com.engineeringwithsandeep.worldbankservice.socket.command;
 
 public abstract class Command {
 

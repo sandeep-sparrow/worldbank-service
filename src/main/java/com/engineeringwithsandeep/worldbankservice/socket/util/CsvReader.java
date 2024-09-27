@@ -1,7 +1,7 @@
-package com.engineeringwithsandeep.worldbankservice.socket.serial.util;
+package com.engineeringwithsandeep.worldbankservice.socket.util;
 
-import com.engineeringwithsandeep.worldbankservice.socket.serial.dao.CountryData;
-import com.engineeringwithsandeep.worldbankservice.socket.serial.dao.WDIDao;
+import com.engineeringwithsandeep.worldbankservice.socket.dao.CountryData;
+import com.engineeringwithsandeep.worldbankservice.socket.dao.WDIDao;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 

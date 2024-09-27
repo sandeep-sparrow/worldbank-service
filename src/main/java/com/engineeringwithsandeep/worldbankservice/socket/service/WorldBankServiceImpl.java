@@ -1,12 +1,12 @@
-package com.engineeringwithsandeep.worldbankservice.socket.serial.service;
+package com.engineeringwithsandeep.worldbankservice.socket.service;
 
-import com.engineeringwithsandeep.worldbankservice.socket.serial.dao.CountryData;
-import com.engineeringwithsandeep.worldbankservice.socket.serial.dao.WDIDao;
+import com.engineeringwithsandeep.worldbankservice.socket.dao.CountryData;
+import com.engineeringwithsandeep.worldbankservice.socket.dao.WDIDao;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.OptionalDouble;
-import static com.engineeringwithsandeep.worldbankservice.socket.serial.dao.WDIDao.database;
+import static com.engineeringwithsandeep.worldbankservice.socket.dao.WDIDao.database;
 
 /**
  * This is service class used for access database and implementing business logic

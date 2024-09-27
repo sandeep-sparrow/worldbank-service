@@ -1,6 +1,6 @@
-package com.engineeringwithsandeep.worldbankservice.socket.serial.dao;
+package com.engineeringwithsandeep.worldbankservice.socket.dao;
 
-import com.engineeringwithsandeep.worldbankservice.socket.serial.util.CsvReader;
+import com.engineeringwithsandeep.worldbankservice.socket.util.CsvReader;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;

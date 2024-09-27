@@ -1,8 +1,8 @@
-package com.engineeringwithsandeep.worldbankservice.socket.serial.server;
+package com.engineeringwithsandeep.worldbankservice.socket.server;
 
-import com.engineeringwithsandeep.worldbankservice.socket.serial.command.*;
-import com.engineeringwithsandeep.worldbankservice.socket.serial.dao.WDIDao;
-import com.engineeringwithsandeep.worldbankservice.socket.serial.service.WorldBankServiceImpl;
+import com.engineeringwithsandeep.worldbankservice.socket.command.*;
+import com.engineeringwithsandeep.worldbankservice.socket.dao.WDIDao;
+import com.engineeringwithsandeep.worldbankservice.socket.service.WorldBankServiceImpl;
 
 import java.io.*;
 import java.net.*;
